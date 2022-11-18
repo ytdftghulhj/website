@@ -9,7 +9,7 @@ class ArticleAdmin(admin.ModelAdmin):
 
 admin.site.register(Article, ArticleAdmin)
 admin.site.register(Category)
-admin.site.register(Users)
+admin.site.register(CustomUser)
 admin.site.register(Comments)
-admin.site.register(Tags)
+
 
