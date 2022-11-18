@@ -11,4 +11,5 @@ admin.site.register(Article, ArticleAdmin)
 admin.site.register(Category)
 admin.site.register(Users)
 admin.site.register(Comments)
+admin.site.register(Tags)
 
