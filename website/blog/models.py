@@ -1,9 +1,30 @@
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+from django.contrib.auth.models import  PermissionsMixin, AbstractUser,BaseUserManager
 from django.utils.translation import gettext_lazy as _
 from taggit.managers import TaggableManager
-
 from .managers import CustomUserManager
+
+
+class MyUserManager(BaseUserManager):
+    def _create_user(self, email, nickname, password, **extra_fields):
+        if not email:
+            raise ValueError("Вы не ввели Email")
+        if not nickname:
+            raise ValueError("Вы не ввели Логин")
+        user = self.model(
+            email=self.normalize_email(email),
+            username=nickname,
+            **extra_fields,
+        )
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_user(self, email, username, password):
+        return self._create_user(email, username, password)
+
+    def create_superuser(self, email, username, password):
+        return self._create_user(email, username, password, is_staff=True, is_superuser=True)
 
 
 class Category(models.Model):
@@ -31,23 +52,26 @@ class Role(models.TextChoices):
     Admin = 'AD',_('Admin')
     User = 'US', _('User')
 
-class CustomUser(AbstractBaseUser, PermissionsMixin):
+
+class CustomUser(AbstractUser, PermissionsMixin):
     email = models.EmailField(_('email address'), unique=True)
     nickname = models.CharField(max_length=255)
-    is_confirmed = models.BooleanField()
+    is_confirmed = models.BooleanField(default=False)
     role = models.CharField(
         max_length=2,
         choices=Role.choices,
         default=Role.User,
     )
-    password_hash = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
     subscriptions = models.ManyToManyField('CustomUser', through='Subscriptions')
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = []
+    REQUIRED_FIELDS = ['nickname']
 
-    objects = CustomUserManager()
+    objects = MyUserManager()
+
+    class Meta:
+        db_table = "tbl_users"
 
     def __str__(self):
         return self.email
@@ -71,4 +95,5 @@ class Comments(models.Model):
 class Notification(models.Model):
     subscriber = models.ForeignKey('CustomUser', on_delete=models.PROTECT, null=True)
     content = models.ForeignKey('Article', on_delete=models.PROTECT, null=True)
+
 
